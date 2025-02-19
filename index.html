@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt to Image Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: #011753;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fffff;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            width: 100%;
+        }
+
+        .generator-container {
+            background-color: #262626;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 1rem;
+            background-color: #fffff;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background-color: #011753;
+            color: #ffff;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .image-gallery {
+            margin-top: 2rem;
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        }
+
+        .generated-image {
+            width: 100%;
+            border-radius: 5px;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            background-color: #333;
+        }
+
+        footer {
+            background-color: #011753;
+            padding: 1.5rem;
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .error-message {
+            color: #ff4444;
+            margin-top: 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+<img src="E:\website backups\Godesine\GoDesine-Logonew.png" alt="Your Company Logo">
+
+            <div class="logo">Godesine AI Image Generator</div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="generator-container">
+            <div class="input-group">
+                <textarea id="prompt-input" placeholder="Enter your prompt here..."></textarea>
+            </div>
+            <div class="input-group">
+                <button onclick="generateImage()">Generate Image</button>
+            </div>
+            <div class="loading" id="loading">
+                Generating your image...
+            </div>
+            <div class="error-message" id="error-message"></div>
+            <div class="image-gallery" id="image-gallery"></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 AI Image Generator. All rights reserved by GoDesine</p>
+    </footer>
+
+    <script>
+        // Get your Hugging Face token from https://huggingface.co/settings/tokens
+        const HF_API_TOKEN = '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';
+        const MODEL_API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
+
+        async function generateImage() {
+            const prompt = document.getElementById('prompt-input').value;
+            const gallery = document.getElementById('image-gallery');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+
+            // Clear previous results and errors
+            errorMessage.textContent = '';
+            gallery.innerHTML = '';
+
+            if (!prompt) {
+                errorMessage.textContent = 'Please enter a prompt';
+                return;
+            }
+
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch(MODEL_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${HF_API_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ inputs: prompt }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
+                }
+
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob);
+
+                const imgElement = document.createElement('img');
+                imgElement.src = imageUrl;
+                imgElement.classList.add('generated-image');
+                gallery.appendChild(imgElement);
+            } catch (error) {
+                errorMessage.textContent = `Error: ${error.message}`;
+                console.error('Generation error:', error);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
